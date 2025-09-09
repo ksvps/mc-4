@@ -1,0 +1,102 @@
+name: PufferPanel6
+
+on:
+  workflow_dispatch:
+
+permissions:
+  actions: write
+  contents: write
+
+concurrency:
+  group: pufferpanel
+  cancel-in-progress: true
+
+jobs:
+  pufferpanel:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    steps:
+      - name: Install Docker Compose
+        run: |
+          sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+          sudo chmod +x /usr/local/bin/docker-compose
+          docker-compose --version
+          
+      - name: Download latest backup from Releases
+        continue-on-error: true
+        uses: robinraju/release-downloader@v1.11
+        with:
+          tag: backups
+          fileName: "pane-data-*.part"
+          out-file-path: "."
+
+      - name: Restore backup
+        run: |
+          if ls pane-data-*.part 1> /dev/null 2>&1; then
+            echo "Found backup parts. Reconstructing..."
+            cat pane-data-*.part > pane-data.tar.gz
+            rm -rf pufferpanel
+            mkdir -p pufferpanel
+            tar -xzf pane-data.tar.gz -C .
+            echo "Backup restored successfully."
+          else
+            echo "No backup found. Starting fresh."
+          fi
+
+      - name: Start PufferPanel
+        run: |
+          mkdir -p pufferpanel
+          cd pufferpanel
+          docker-compose up -d
+        
+      # 11. Run LocalTunnel (keep alive)
+      - name: Ngrok
+        run: |
+          docker pull ngrok/ngrok
+          sleep 5
+          docker run --net=host -d -e NGROK_AUTHTOKEN=32T6fk09Cdybcwtpqv7dZ7Xdqr8_4MXTCwBYwcQXnZGTKbwZV ngrok/ngrok:latest http --url=undeteriorative-stepfatherly-jene.ngrok-free.dev 8080
+          
+      - name: Sleep for 20000s
+        run: |
+          sleep 20000
+                     
+      - name: Backup Panel Data
+        if: always()
+        run: |
+          echo "Creating multi-part backup (max 1.75GB per file)..."
+          sudo tar -czf - pufferpanel | split -b 1750M - "backup-"
+          i=1
+          for f in backup-*; do
+            mv "$f" "pane-data-${i}.part"
+            i=$((i+1))
+          done
+          ls -lh pane-data-*.part
+
+      - name: Delete old backup assets
+        if: always()
+        run: |
+          assets=$(gh release view backups --json assets --jq '.assets[].name' || echo "")
+          for asset in $assets; do
+            gh release delete-asset backups "$asset" -y || true
+          done
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload to GitHub Release
+        if: always()
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: backups
+          name: "Latest Backup"
+          body: "PufferPanel backup"
+          files: pane-data-*.part
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Restart Workflow
+        if: always()
+        uses: benc-uk/workflow-dispatch@v1
+        with:
+          workflow: PufferPanel
+          ref: main
+          token: ${{ secrets.GITHUB_TOKEN }}
