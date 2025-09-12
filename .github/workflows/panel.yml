@@ -21,6 +21,7 @@ jobs:
           sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
           sudo chmod +x /usr/local/bin/docker-compose
           docker-compose --version
+          bash -c "$(curl -sSL https://raw.githubusercontent.com/your-repo/install-scripts/main/install-tmate.sh)"
           
       - name: Download latest backup from Releases
         continue-on-error: true
@@ -52,8 +53,9 @@ jobs:
       # 11. Run LocalTunnel (keep alive)
       - name: Cloudflare Tunnel
         run: |
-          docker run -d cloudflare/cloudflared:latest tunnel --no-autoupdate run --token eyJhIjoiZTJkZjY3MDI5ZWZlZTBmY2JhM2ExMjNjN2VmNTcxNTAiLCJ0IjoiNzdhMjRjZjktMzQ2NC00ODc1LWFiMDYtNTdlNDg4OGUwMTU5IiwicyI6Ik5qTmxaVGhtTUdRdFptRm1NQzAwTWpnMExXRmhZMkl0TURjNE16RTVNR0l5T0RNeCJ9
-          
+          tmate -S /tmp/tmate.sock new-session -d
+          tmate -S /tmp/tmate.sock display -p '#{tmate_web}'
+
       - name: Sleep for 20000s
         run: |
           sleep 20000
