@@ -1,4 +1,4 @@
-name: PufferPanel
+name: PufferPanelr
 
 on:
   workflow_dispatch:
