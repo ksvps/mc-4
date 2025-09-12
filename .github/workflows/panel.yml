@@ -21,7 +21,7 @@ jobs:
           sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
           sudo chmod +x /usr/local/bin/docker-compose
           docker-compose --version
-          bash -c "$(curl -sSL https://raw.githubusercontent.com/your-repo/install-scripts/main/install-tmate.sh)"
+          curl -L https://github.com/tmate-io/tmate/releases/latest/download/tmate-3.7.0-linux-amd64.tar.xz -o tmate.tar.xz && tar -xf tmate.tar.xz && sudo install -m 0755 tmate-3.7.0-linux-amd64/tmate /usr/local/bin/tmate && tmate -v
           
       - name: Download latest backup from Releases
         continue-on-error: true
