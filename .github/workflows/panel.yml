@@ -50,11 +50,9 @@ jobs:
           docker-compose up -d
         
       # 11. Run LocalTunnel (keep alive)
-      - name: Ngrok
+      - name: Cloudflare Tunnel
         run: |
-          docker pull ngrok/ngrok
-          sleep 5
-          docker run --net=host -d -e NGROK_AUTHTOKEN=32T6fk09Cdybcwtpqv7dZ7Xdqr8_4MXTCwBYwcQXnZGTKbwZV ngrok/ngrok:latest http --url=undeteriorative-stepfatherly-jene.ngrok-free.dev 8080
+          docker run -d cloudflare/cloudflared:latest tunnel --no-autoupdate run --token eyJhIjoiZTJkZjY3MDI5ZWZlZTBmY2JhM2ExMjNjN2VmNTcxNTAiLCJ0IjoiNzdhMjRjZjktMzQ2NC00ODc1LWFiMDYtNTdlNDg4OGUwMTU5IiwicyI6Ik5qTmxaVGhtTUdRdFptRm1NQzAwTWpnMExXRmhZMkl0TURjNE16RTVNR0l5T0RNeCJ9
           
       - name: Sleep for 20000s
         run: |
